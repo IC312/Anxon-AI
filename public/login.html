@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Chat – Đăng nhập</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0d0f;--surface:#16161a;--border:#2a2a32;--acc:#e8ff5a;--acc-dim:rgba(232,255,90,.12);--txt:#e8e8f0;--muted:#55556a;--err:#f87171;--ok:#4ade80}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;display:flex;align-items:center;justify-content:center}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;margin:24px}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+  .logo-mark{width:34px;height:34px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#0d0d0f;font-family:'DM Mono',monospace;flex-shrink:0}
+  .logo span{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+  .tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:9px;padding:3px;margin-bottom:24px}
+  .tab{flex:1;padding:8px;text-align:center;font-size:.82rem;border-radius:7px;cursor:pointer;color:var(--muted);transition:all .15s;border:none;background:none;font-family:'DM Sans',sans-serif}
+  .tab.active{background:var(--acc);color:#0d0d0f;font-weight:600}
+  .form{display:none;flex-direction:column;gap:14px}
+  .form.active{display:flex}
+  label{font-size:.75rem;color:var(--muted);margin-bottom:4px;display:block;letter-spacing:.02em}
+  .field{display:flex;flex-direction:column}
+  input{background:#0d0d0f;border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--txt);font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+  input:focus{border-color:rgba(232,255,90,.45)}
+  input::placeholder{color:var(--muted)}
+  .hint{font-size:.68rem;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace}
+  .btn{padding:11px;border-radius:9px;border:none;background:var(--acc);color:#0d0d0f;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+  .btn:hover{background:#f0ff6e}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .msg{font-size:.8rem;padding:10px 12px;border-radius:8px;text-align:center;display:none}
+  .msg.err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:var(--err);display:block}
+  .msg.ok{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);color:var(--ok);display:block}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.72rem;font-family:'DM Mono',monospace;margin:2px 0}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">H3</div>
+    <span>Hermes Chat</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('login')">Đăng nhập</button>
+    <button class="tab" onclick="switchTab('register')">Đăng ký</button>
+  </div>
+
+  <!-- ── Đăng nhập ── -->
+  <form class="form active" id="form-login" onsubmit="doLogin(event)">
+    <div class="field">
+      <label>Họ và tên</label>
+      <input type="text" id="l-name" placeholder="Nguyễn Văn A" required autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Lớp <span style="color:var(--muted);font-size:.68rem">(để trống nếu là admin)</span></label>
+      <input type="text" id="l-class" placeholder="10A1" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input type="password" id="l-pass" placeholder="••••••••" required autocomplete="current-password">
+    </div>
+    <div class="msg" id="l-msg"></div>
+    <button class="btn" type="submit" id="l-btn">Đăng nhập</button>
+  </form>
+
+  <!-- ── Đăng ký ── -->
+  <form class="form" id="form-register" onsubmit="doRegister(event)">
+    <div class="field">
+      <label>Họ và tên</label>
+      <input type="text" id="r-name" placeholder="Nguyễn Văn A" required autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Lớp</label>
+      <input type="text" id="r-class" placeholder="10A1" required autocomplete="off">
+      <span class="hint">Ví dụ: 10A1, 11B2, 12C3</span>
+    </div>
+    <div class="field">
+      <label>Mật khẩu (tối thiểu 6 ký tự)</label>
+      <input type="password" id="r-pass" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+    </div>
+    <div class="msg" id="r-msg"></div>
+    <button class="btn" type="submit" id="r-btn">Tạo tài khoản</button>
+  </form>
+</div>
+
+<script>
+  const token = localStorage.getItem('hc_token');
+  const role  = localStorage.getItem('hc_role');
+  if (token) location.href = role === 'admin' ? '/admin.html' : '/chat.html';
+
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', isLogin ? i===0 : i===1));
+    document.getElementById('form-login').classList.toggle('active', isLogin);
+    document.getElementById('form-register').classList.toggle('active', !isLogin);
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('l-btn');
+    btn.disabled = true; btn.textContent = 'Đang đăng nhập…';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          fullName:  document.getElementById('l-name').value,
+          className: document.getElementById('l-class').value,
+          password:  document.getElementById('l-pass').value,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { showMsg('l-msg', data.error, 'err'); return; }
+      localStorage.setItem('hc_token',     data.token);
+      localStorage.setItem('hc_role',      data.role);
+      localStorage.setItem('hc_fullName',  data.fullName);
+      localStorage.setItem('hc_className', data.className || '');
+      location.href = data.role === 'admin' ? '/admin.html' : '/chat.html';
+    } catch { showMsg('l-msg', 'Lỗi kết nối server', 'err'); }
+    finally { btn.disabled = false; btn.textContent = 'Đăng nhập'; }
+  }
+
+  async function doRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('r-btn');
+    btn.disabled = true; btn.textContent = 'Đang tạo tài khoản…';
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          fullName:  document.getElementById('r-name').value,
+          className: document.getElementById('r-class').value,
+          password:  document.getElementById('r-pass').value,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { showMsg('r-msg', data.error, 'err'); return; }
+      localStorage.setItem('hc_token',     data.token);
+      localStorage.setItem('hc_role',      data.role);
+      localStorage.setItem('hc_fullName',  data.fullName);
+      localStorage.setItem('hc_className', data.className || '');
+      location.href = '/chat.html';
+    } catch { showMsg('r-msg', 'Lỗi kết nối server', 'err'); }
+    finally { btn.disabled = false; btn.textContent = 'Tạo tài khoản'; }
+  }
+</script>
+</body>
+</html>

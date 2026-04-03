@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1c1c22;--border:#2a2a32;--acc:#e8ff5a;--acc-dim:rgba(232,255,90,.12);--txt:#e8e8f0;--muted:#55556a;--r:10px}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── Header ── */
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+  .logo{display:flex;align-items:center;gap:9px}
+  .logo-mark{width:30px;height:30px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#0d0d0f;font-family:'DM Mono',monospace}
+  .logo-txt{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted)}
+  .admin-badge{padding:3px 10px;background:var(--acc-dim);border:1px solid rgba(232,255,90,.25);border-radius:20px;font-size:.68rem;color:var(--acc);font-family:'DM Mono',monospace;letter-spacing:.04em}
+  .head-right{display:flex;align-items:center;gap:12px}
+  .head-name{font-size:.78rem;color:var(--muted)}
+  .logout-btn{padding:6px 13px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--muted);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .logout-btn:hover{border-color:#f87171;color:#f87171}
+
+  /* ── Stats bar ── */
+  #stats-bar{display:flex;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+  .stat{display:flex;flex-direction:column;padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:9px;min-width:110px}
+  .stat-val{font-size:1.3rem;font-weight:700;color:var(--acc);font-family:'DM Mono',monospace}
+  .stat-lbl{font-size:.68rem;color:var(--muted);margin-top:2px}
+
+  /* ── 3-Panel layout ── */
+  #panels{display:flex;flex:1;overflow:hidden}
+
+  /* Panel shared */
+  .panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+  .panel-head{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+  .panel-title{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .panel-body{flex:1;overflow-y:auto}
+  .panel-body::-webkit-scrollbar{width:3px}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  /* ── Panel 1: Classes ── */
+  #panel-classes{width:180px;min-width:180px}
+  .class-item{padding:10px 14px;cursor:pointer;font-size:.85rem;border-bottom:1px solid rgba(42,42,50,.5);transition:all .15s;display:flex;align-items:center;justify-content:space-between}
+  .class-item:hover{background:rgba(255,255,255,.03)}
+  .class-item.active{background:var(--acc-dim);color:var(--acc);font-weight:600}
+  .class-count{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;background:var(--surface2);padding:2px 7px;border-radius:10px}
+  .class-item.active .class-count{background:rgba(232,255,90,.15);color:var(--acc)}
+
+  /* ── Panel 2: Students ── */
+  #panel-students{width:260px;min-width:260px}
+  .search-wrap{padding:10px 12px;border-bottom:1px solid var(--border)}
+  .search-input{width:100%;background:#0d0d0f;border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:.8rem;font-family:'DM Sans',sans-serif;outline:none}
+  .search-input:focus{border-color:rgba(232,255,90,.35)}
+  .search-input::placeholder{color:var(--muted)}
+  .student-item{padding:11px 14px;cursor:pointer;border-bottom:1px solid rgba(42,42,50,.4);transition:all .15s;display:flex;align-items:center;gap:10px}
+  .student-item:hover{background:rgba(255,255,255,.03)}
+  .student-item.active{background:var(--acc-dim)}
+  .s-av{width:34px;height:34px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:var(--acc);font-family:'DM Mono',monospace;flex-shrink:0}
+  .s-info{flex:1;min-width:0}
+  .s-name{font-size:.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .s-meta{font-size:.68rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace}
+  .empty-hint{padding:24px;text-align:center;font-size:.8rem;color:var(--muted)}
+
+  /* ── Panel 3: Right area (conversations + messages) ── */
+  #panel-right{flex:1;display:flex;overflow:hidden}
+
+  /* Conversations sub-panel */
+  #sub-convs{width:280px;min-width:280px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .conv-row{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(42,42,50,.4);transition:all .15s}
+  .conv-row:hover{background:rgba(255,255,255,.03)}
+  .conv-row.active{background:var(--acc-dim)}
+  .conv-row-title{font-size:.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+  .conv-row-meta{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;display:flex;justify-content:space-between}
+
+  /* Messages sub-panel */
+  #sub-msgs{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .msg-head{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.8rem;color:var(--muted);font-family:'DM Mono',monospace;flex-shrink:0;display:flex;align-items:center;gap:8px;background:var(--surface)}
+  .msg-head b{color:var(--txt);font-weight:500}
+  #msgs-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  #msgs-body::-webkit-scrollbar{width:3px}
+  #msgs-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .mb{padding:9px 12px;border-radius:9px;font-size:.83rem;line-height:1.7;max-width:85%;word-break:break-word}
+  .mb.user{align-self:flex-end;background:var(--surface2);border:1px solid rgba(232,255,90,.12);border-bottom-right-radius:3px}
+  .mb.assistant{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:3px}
+  .mb-role{font-size:.65rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:3px}
+  .mb pre{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:10px;overflow-x:auto;margin:6px 0;font-size:.75em}
+  .mb code{font-family:'DM Mono',monospace;font-size:.8em;color:var(--acc);background:rgba(232,255,90,.08);padding:1px 4px;border-radius:3px}
+  .mb pre code{background:none;color:var(--txt);padding:0}
+  .placeholder{margin:auto;text-align:center;color:var(--muted);font-size:.82rem;padding:40px 20px;line-height:1.8}
+  .placeholder strong{display:block;font-size:1.4rem;margin-bottom:8px;color:var(--surface2);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">H3</div>
+    <span class="logo-txt">Hermes Admin</span>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="head-right">
+    <span class="head-name" id="admin-name"></span>
+    <button class="logout-btn" onclick="logout()">Đăng xuất</button>
+  </div>
+</header>
+
+<!-- ── Stats ── -->
+<div id="stats-bar">
+  <div class="stat"><span class="stat-val" id="st-classes">—</span><span class="stat-lbl">Lớp học</span></div>
+  <div class="stat"><span class="stat-val" id="st-students">—</span><span class="stat-lbl">Học sinh</span></div>
+  <div class="stat"><span class="stat-val" id="st-convs">—</span><span class="stat-lbl">Hội thoại</span></div>
+  <div class="stat"><span class="stat-val" id="st-msgs">—</span><span class="stat-lbl">Tin nhắn</span></div>
+</div>
+
+<!-- ── 3 Panels ── -->
+<div id="panels">
+
+  <!-- Panel 1: Classes -->
+  <div class="panel" id="panel-classes">
+    <div class="panel-head"><span class="panel-title">📚 Lớp học</span></div>
+    <div class="panel-body" id="class-list"></div>
+  </div>
+
+  <!-- Panel 2: Students -->
+  <div class="panel" id="panel-students">
+    <div class="panel-head"><span class="panel-title">👤 Học sinh</span></div>
+    <div class="search-wrap"><input class="search-input" id="s-search" placeholder="Tìm theo tên…" oninput="filterStudents(this.value)"></div>
+    <div class="panel-body" id="student-list"><div class="empty-hint">← Chọn lớp</div></div>
+  </div>
+
+  <!-- Panel 3: Right -->
+  <div id="panel-right">
+
+    <!-- Conversations -->
+    <div id="sub-convs">
+      <div class="panel-head"><span class="panel-title">💬 Hội thoại</span></div>
+      <div class="panel-body" id="conv-list"><div class="empty-hint">← Chọn học sinh</div></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="sub-msgs">
+      <div class="msg-head" id="msgs-head">
+        <span>Chọn hội thoại để xem nội dung</span>
+      </div>
+      <div id="msgs-body">
+        <div class="placeholder"><strong>💬</strong>Chọn một hội thoại<br>để xem lịch sử chat</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('hc_token');
+const role  = localStorage.getItem('hc_role');
+if (!token || role !== 'admin') location.href = '/login.html';
+
+document.getElementById('admin-name').textContent = localStorage.getItem('hc_fullName') || 'Admin';
+
+const authHeader = () => ({ 'Content-Type':'application/json', 'Authorization':'Bearer '+token });
+
+let allStudents    = [];
+let selectedClass  = null;
+let selectedStudent = null;
+let selectedConv   = null;
+
+// ── Escape ────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderMd(text) {
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${esc(c.trim())}</code></pre>`);
+  text = text.replace(/`([^`\n]+)`/g,(_,c)=>`<code>${esc(c)}</code>`);
+  text = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  text = text.replace(/\n/g,'<br>');
+  return text;
+}
+
+function fmt(d){ const dt=new Date(d); return dt.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+dt.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}); }
+
+// ── Stats ─────────────────────────────────────────────
+async function loadStats() {
+  const res  = await fetch('/api/admin/stats', { headers: authHeader() });
+  const data = await res.json();
+  document.getElementById('st-classes').textContent  = data.totalClasses;
+  document.getElementById('st-students').textContent = data.totalStudents;
+  document.getElementById('st-convs').textContent    = data.totalConvs;
+  document.getElementById('st-msgs').textContent     = data.totalMsgs;
+}
+
+// ── Classes ───────────────────────────────────────────
+async function loadClasses() {
+  const res     = await fetch('/api/admin/classes', { headers: authHeader() });
+  const classes = await res.json();
+  const el      = document.getElementById('class-list');
+
+  if (!classes.length) { el.innerHTML = '<div class="empty-hint">Chưa có lớp nào</div>'; return; }
+
+  el.innerHTML = '';
+  classes.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'class-item';
+    item.innerHTML = `<span>Lớp ${esc(c)}</span><span class="class-count">—</span>`;
+    item.addEventListener('click', () => selectClass(c, item));
+    el.appendChild(item);
+  });
+}
+
+async function selectClass(cls, el) {
+  selectedClass = cls;
+  document.querySelectorAll('.class-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('s-search').value = '';
+
+  // Reset right panels
+  document.getElementById('conv-list').innerHTML  = '<div class="empty-hint">← Chọn học sinh</div>';
+  document.getElementById('msgs-body').innerHTML  = '<div class="placeholder"><strong>💬</strong>Chọn một hội thoại<br>để xem lịch sử chat</div>';
+  document.getElementById('msgs-head').innerHTML  = '<span>Chọn hội thoại để xem nội dung</span>';
+
+  const res      = await fetch(`/api/admin/classes/${encodeURIComponent(cls)}/students`, { headers: authHeader() });
+  allStudents    = await res.json();
+  renderStudents(allStudents);
+
+  // Update count badge
+  el.querySelector('.class-count').textContent = allStudents.length;
+}
+
+function renderStudents(list) {
+  const el = document.getElementById('student-list');
+  if (!list.length) { el.innerHTML = '<div class="empty-hint">Không có học sinh</div>'; return; }
+  el.innerHTML = '';
+  list.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'student-item';
+    item.innerHTML = `
+      <div class="s-av">${esc(s.fullName.charAt(0).toUpperCase())}</div>
+      <div class="s-info">
+        <div class="s-name">${esc(s.fullName)}</div>
+        <div class="s-meta">${esc(s.email)} · ${s.convCount} hội thoại</div>
+      </div>`;
+    item.addEventListener('click', () => selectStudent(s, item));
+    el.appendChild(item);
+  });
+}
+
+function filterStudents(q) {
+  const filtered = allStudents.filter(s =>
+    s.fullName.toLowerCase().includes(q.toLowerCase()) ||
+    s.email.toLowerCase().includes(q.toLowerCase())
+  );
+  renderStudents(filtered);
+}
+
+// ── Students ──────────────────────────────────────────
+async function selectStudent(student, el) {
+  selectedStudent = student;
+  document.querySelectorAll('.student-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+
+  // Reset messages
+  document.getElementById('msgs-body').innerHTML = '<div class="placeholder"><strong>💬</strong>Chọn một hội thoại<br>để xem lịch sử chat</div>';
+  document.getElementById('msgs-head').innerHTML = '<span>Chọn hội thoại để xem nội dung</span>';
+
+  const res   = await fetch(`/api/admin/users/${student._id}/conversations`, { headers: authHeader() });
+  const convs = await res.json();
+  renderConvs(convs, student);
+}
+
+function renderConvs(convs, student) {
+  const el = document.getElementById('conv-list');
+  if (!convs.length) { el.innerHTML = `<div class="empty-hint">${esc(student.fullName)} chưa có hội thoại nào</div>`; return; }
+  el.innerHTML = '';
+  convs.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'conv-row';
+    item.innerHTML = `
+      <div class="conv-row-title">${esc(c.title)}</div>
+      <div class="conv-row-meta"><span>${c.msgCount} tin nhắn</span><span>${fmt(c.updatedAt)}</span></div>`;
+    item.addEventListener('click', () => selectConv(c, student, item));
+    el.appendChild(item);
+  });
+}
+
+// ── Messages ──────────────────────────────────────────
+async function selectConv(conv, student, el) {
+  selectedConv = conv;
+  document.querySelectorAll('.conv-row').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('msgs-head').innerHTML =
+    `<b>${esc(student.fullName)}</b> <span style="color:var(--muted)">·</span> ${esc(conv.title)}`;
+
+  const res  = await fetch(`/api/admin/conversations/${conv._id}/messages`, { headers: authHeader() });
+  const msgs = await res.json();
+  const body = document.getElementById('msgs-body');
+
+  if (!msgs.length) { body.innerHTML = '<div class="placeholder"><strong>—</strong>Hội thoại trống</div>'; return; }
+
+  body.innerHTML = '';
+  msgs.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'mb ' + m.role;
+    div.innerHTML = `<div class="mb-role">${m.role === 'user' ? '👤 ' + esc(student.fullName) : '🤖 Hermes'}</div>${m.role === 'user' ? esc(m.content).replace(/\n/g,'<br>') : renderMd(m.content)}`;
+    body.appendChild(div);
+  });
+  body.scrollTop = body.scrollHeight;
+}
+
+function logout() {
+  ['hc_token','hc_role','hc_fullName','hc_className'].forEach(k => localStorage.removeItem(k));
+  location.href = '/login.html';
+}
+
+// ── Init ──────────────────────────────────────────────
+Promise.all([loadStats(), loadClasses()]);
+</script>
+</body>
+</html>
