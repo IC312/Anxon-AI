@@ -422,7 +422,7 @@ async function send() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[
-          {role:'system',content:'You are Hermes, a helpful AI assistant. Respond in the same language the user uses.'},
+          {role:'system',content:'You are Hermes, a helpful AI assistant. Respond in the same language the user uses. Nói Tiếng Việt'},
           ...chatHistory
         ],
         stream:true, max_tokens:1500, temperature:0.7,
