@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Chat – Đăng nhập</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0d0f;--surface:#16161a;--border:#2a2a32;--acc:#e8ff5a;--acc-dim:rgba(232,255,90,.12);--txt:#e8e8f0;--muted:#55556a;--err:#f87171;--ok:#4ade80}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:100%;max-width:400px}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .logo-mark{width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#0d0d0f;font-family:'DM Mono',monospace}
+  .logo-name{font-family:'DM Mono',monospace;font-size:.82rem;color:var(--txt);letter-spacing:.04em}
+  .subtitle{font-size:.78rem;color:var(--muted);margin-bottom:32px;font-family:'DM Mono',monospace}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  label{font-size:.75rem;color:var(--muted);letter-spacing:.02em}
+  input{background:#0d0d0f;border:1px solid var(--border);border-radius:9px;padding:11px 14px;color:var(--txt);font-size:.92rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%}
+  input:focus{border-color:rgba(232,255,90,.5)}
+  input::placeholder{color:var(--muted)}
+  .hint{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace}
+  .btn{width:100%;padding:12px;border-radius:10px;border:none;background:var(--acc);color:#0d0d0f;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:6px}
+  .btn:hover:not(:disabled){background:#f0ff6e;transform:translateY(-1px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .msg{font-size:.8rem;padding:10px 13px;border-radius:8px;text-align:center;margin-top:10px;display:none}
+  .msg.err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);color:var(--err);display:block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">H3</div>
+    <span class="logo-name">Hermes Chat</span>
+  </div>
+  <p class="subtitle">Hệ thống học tập AI</p>
+
+  <form onsubmit="doLogin(event)">
+    <div class="field">
+      <label>Số định danh cá nhân (CCCD)</label>
+      <input type="text" id="cccd" placeholder="Nhập 12 số CCCD" maxlength="12" inputmode="numeric" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input type="password" id="pw" placeholder="Mặc định: ngày sinh DDMMYYYY" required autocomplete="current-password">
+      <span class="hint">Mật khẩu mặc định: ngày sinh dạng DDMMYYYY &nbsp;(vd: 02032014)</span>
+    </div>
+    <div class="msg" id="msg"></div>
+    <button class="btn" type="submit" id="btn">Đăng nhập</button>
+  </form>
+</div>
+
+<script>
+  const token = localStorage.getItem('hc_token');
+  const role  = localStorage.getItem('hc_role');
+  if (token) location.href = role === 'admin' ? '/admin.html' : '/chat.html';
+
+  async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
+    btn.disabled = true; btn.textContent = 'Đang đăng nhập…'; msg.className='msg';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ cccd: document.getElementById('cccd').value.trim(), password: document.getElementById('pw').value })
+      });
+      const data = await res.json();
+      if (!res.ok) { msg.textContent = data.error; msg.className = 'msg err'; return; }
+      ['hc_token','hc_role','hc_fullName','hc_className','hc_gender','hc_dob','hc_mustChangePw'].forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('hc_token',       data.token);
+      localStorage.setItem('hc_role',        data.role);
+      localStorage.setItem('hc_fullName',    data.fullName);
+      localStorage.setItem('hc_className',   data.className || '');
+      localStorage.setItem('hc_gender',      data.gender || '');
+      localStorage.setItem('hc_dob',         data.dob || '');
+      localStorage.setItem('hc_mustChangePw',data.mustChangePassword ? '1' : '0');
+      location.href = data.role === 'admin' ? '/admin.html' : '/chat.html';
+    } catch { msg.textContent = 'Lỗi kết nối server'; msg.className = 'msg err'; }
+    finally { btn.disabled = false; btn.textContent = 'Đăng nhập'; }
+  }
+</script>
+</body>
+</html>

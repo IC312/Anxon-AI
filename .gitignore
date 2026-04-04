@@ -1,0 +1,14 @@
+# Chặn file chứa mật khẩu Database và mã bí mật JWT
+.env
+.env.local
+
+# Chặn thư mục thư viện nặng
+node_modules/
+
+# Chặn log hệ thống
+*.log
+npm-debug.log*
+
+# Chặn file rác hệ điều hành
+.DS_Store
+Thumbs.db

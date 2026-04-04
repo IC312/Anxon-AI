@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1c1c22;--border:#2a2a32;--acc:#e8ff5a;--acc-dim:rgba(232,255,90,.12);--txt:#e8e8f0;--muted:#55556a;--r:10px}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+  .logo{display:flex;align-items:center;gap:9px}
+  .logo-mark{width:28px;height:28px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#0d0d0f;font-family:'DM Mono',monospace}
+  .logo-txt{font-family:'DM Mono',monospace;font-size:.73rem;color:var(--muted)}
+  .admin-badge{padding:2px 10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:20px;font-size:.65rem;color:#f87171;font-family:'DM Mono',monospace}
+  .head-right{display:flex;align-items:center;gap:10px}
+  .head-name{font-size:.75rem;color:var(--muted)}
+  .logout-btn{padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:none;color:var(--muted);font-size:.73rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .logout-btn:hover{border-color:#f87171;color:#f87171}
+
+  /* Stats bar */
+  #stats-bar{display:flex;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+  .stat{display:flex;flex-direction:column;padding:7px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;min-width:100px}
+  .stat-val{font-size:1.2rem;font-weight:700;color:var(--acc);font-family:'DM Mono',monospace}
+  .stat-lbl{font-size:.65rem;color:var(--muted);margin-top:1px}
+
+  /* 3-Panel layout */
+  #panels{display:flex;flex:1;overflow:hidden}
+  .panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+  .panel-head{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);display:flex;align-items:center;justify-content:space-between}
+  .panel-title{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .panel-body{flex:1;overflow-y:auto}
+  .panel-body::-webkit-scrollbar{width:3px}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .empty-hint{padding:20px;text-align:center;font-size:.78rem;color:var(--muted);line-height:1.8}
+
+  /* Panel 1: Classes */
+  #panel-classes{width:170px;min-width:170px}
+  .class-item{padding:9px 14px;cursor:pointer;font-size:.82rem;border-bottom:1px solid rgba(42,42,50,.5);transition:all .12s;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .class-item:hover{background:rgba(255,255,255,.03)}
+  .class-item.active{background:var(--acc-dim);color:var(--acc);font-weight:600}
+  .class-count{font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;background:var(--surface2);padding:1px 7px;border-radius:10px;flex-shrink:0}
+  .class-item.active .class-count{background:rgba(232,255,90,.15);color:var(--acc)}
+
+  /* Panel 2: Students */
+  #panel-students{width:250px;min-width:250px}
+  .search-wrap{padding:9px 11px;border-bottom:1px solid var(--border)}
+  .search-input{width:100%;background:#0d0d0f;border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--txt);font-size:.78rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+  .search-input:focus{border-color:rgba(232,255,90,.35)}
+  .search-input::placeholder{color:var(--muted)}
+  .student-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(42,42,50,.4);transition:all .12s;display:flex;align-items:center;gap:9px;position:relative}
+  .student-item:hover{background:rgba(255,255,255,.03)}
+  .student-item.active{background:var(--acc-dim)}
+  .s-av{width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--acc);font-family:'DM Mono',monospace;flex-shrink:0}
+  .s-info{flex:1;min-width:0}
+  .s-name{font-size:.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .s-meta{font-size:.65rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace}
+  .s-pw-status{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-left:2px}
+  .s-pw-status.changed{background:#4ade80}
+  .s-pw-status.default{background:#facc15}
+
+  /* Panel 3 */
+  #panel-right{flex:1;display:flex;overflow:hidden}
+  #sub-convs{width:270px;min-width:270px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .conv-row{padding:10px 13px;cursor:pointer;border-bottom:1px solid rgba(42,42,50,.4);transition:all .12s}
+  .conv-row:hover{background:rgba(255,255,255,.03)}
+  .conv-row.active{background:var(--acc-dim)}
+  .conv-row-title{font-size:.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+  .conv-row-meta{font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;display:flex;justify-content:space-between}
+  #sub-msgs{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .msg-head{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;flex-shrink:0;display:flex;align-items:center;gap:8px;background:var(--surface)}
+  .msg-head b{color:var(--txt);font-weight:500}
+  #msgs-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  #msgs-body::-webkit-scrollbar{width:3px}
+  #msgs-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .mb{padding:9px 12px;border-radius:9px;font-size:.82rem;line-height:1.7;max-width:88%;word-break:break-word;overflow-wrap:anywhere}
+  .mb.user{align-self:flex-end;background:var(--surface2);border:1px solid rgba(232,255,90,.12);border-bottom-right-radius:3px}
+  .mb.assistant{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:3px}
+  .mb-role{font-size:.62rem;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:3px}
+  .mb pre{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:10px;overflow-x:auto;margin:6px 0;font-size:.75em}
+  .mb code{font-family:'DM Mono',monospace;font-size:.79em;color:var(--acc);background:rgba(232,255,90,.08);padding:1px 4px;border-radius:3px}
+  .mb pre code{background:none;color:var(--txt);padding:0}
+  .placeholder{margin:auto;text-align:center;color:var(--muted);font-size:.8rem;padding:32px 20px;line-height:2}
+  .placeholder span{display:block;font-size:2rem;margin-bottom:8px}
+
+  /* ── Context menu ── */
+  #ctx-menu{position:fixed;z-index:200;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:4px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
+  #ctx-menu.show{display:block}
+  .ctx-item{padding:8px 14px;border-radius:6px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
+  .ctx-item:hover{background:rgba(255,255,255,.06)}
+  .ctx-item.danger:hover{background:rgba(248,113,113,.08);color:#f87171}
+  .ctx-sep{height:1px;background:var(--border);margin:3px 6px}
+
+  /* ── Student detail modal ── */
+  #detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+  #detail-overlay.open{opacity:1;pointer-events:all}
+  .detail-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:440px;overflow:hidden;transform:translateY(14px);transition:transform .2s}
+  #detail-overlay.open .detail-card{transform:translateY(0)}
+  .dc-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .dc-title{font-size:.88rem;font-weight:600}
+  .dc-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:4px;transition:color .15s}
+  .dc-close:hover{color:var(--txt)}
+  .dc-body{padding:20px}
+  .dc-av{width:54px;height:54px;border-radius:14px;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#0d0d0f;font-family:'DM Mono',monospace;margin:0 auto 18px}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+  .info-item{background:#0d0d0f;border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+  .info-item.full{grid-column:1/-1}
+  .info-label{font-size:.63rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;letter-spacing:.03em;text-transform:uppercase}
+  .info-val{font-size:.84rem;font-weight:500;word-break:break-all}
+  .pw-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .pw-val{font-family:'DM Mono',monospace;font-size:.84rem;font-weight:500}
+  .pw-tag{font-size:.62rem;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;flex-shrink:0}
+  .pw-tag.default{background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.25);color:#facc15}
+  .pw-tag.changed{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:#4ade80}
+  .reset-btn{width:100%;padding:9px;border-radius:8px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.06);color:#f87171;font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+  .reset-btn:hover:not(:disabled){background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5)}
+  .reset-btn:disabled{opacity:.4;cursor:not-allowed}
+  .reset-msg{font-size:.75rem;padding:8px 10px;border-radius:7px;text-align:center;margin-top:8px;display:none}
+  .reset-msg.ok{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:#4ade80;display:block}
+  .reset-msg.err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;display:block}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">H3</div>
+    <span class="logo-txt">Hermes Admin</span>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="head-right">
+    <span class="head-name" id="admin-name"></span>
+    <button class="logout-btn" onclick="logout()">Đăng xuất</button>
+  </div>
+</header>
+
+<div id="stats-bar">
+  <div class="stat"><span class="stat-val" id="st-classes">—</span><span class="stat-lbl">Lớp học</span></div>
+  <div class="stat"><span class="stat-val" id="st-students">—</span><span class="stat-lbl">Học sinh</span></div>
+  <div class="stat"><span class="stat-val" id="st-convs">—</span><span class="stat-lbl">Hội thoại</span></div>
+  <div class="stat"><span class="stat-val" id="st-msgs">—</span><span class="stat-lbl">Tin nhắn</span></div>
+</div>
+
+<div id="panels">
+  <!-- Panel 1: Classes -->
+  <div class="panel" id="panel-classes">
+    <div class="panel-head"><span class="panel-title">📚 Lớp học</span></div>
+    <div class="panel-body" id="class-list"><div class="empty-hint">Đang tải…</div></div>
+  </div>
+
+  <!-- Panel 2: Students -->
+  <div class="panel" id="panel-students">
+    <div class="panel-head">
+      <span class="panel-title">👤 Học sinh</span>
+      <span style="font-size:.62rem;color:var(--muted);font-family:'DM Mono',monospace" id="student-count"></span>
+    </div>
+    <div class="search-wrap"><input class="search-input" id="s-search" placeholder="Tìm tên, CCCD…" oninput="filterStudents(this.value)"></div>
+    <div class="panel-body" id="student-list"><div class="empty-hint">← Chọn lớp</div></div>
+  </div>
+
+  <!-- Panel 3 -->
+  <div id="panel-right">
+    <div id="sub-convs">
+      <div class="panel-head"><span class="panel-title">💬 Hội thoại</span></div>
+      <div class="panel-body" id="conv-list"><div class="empty-hint">← Chọn học sinh</div></div>
+    </div>
+    <div id="sub-msgs">
+      <div class="msg-head" id="msgs-head"><span>Chọn hội thoại để xem nội dung</span></div>
+      <div id="msgs-body"><div class="placeholder"><span>💬</span>Chọn một hội thoại<br>để xem lịch sử chat</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxViewDetail()">🪪 Xem tài khoản chi tiết</div>
+  <div class="ctx-item" onclick="ctxViewConvs()">💬 Xem hội thoại</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxResetPw()">🔑 Reset mật khẩu về mặc định</div>
+</div>
+
+<!-- Student detail modal -->
+<div id="detail-overlay" onclick="closeDetailIfBg(event)">
+  <div class="detail-card">
+    <div class="dc-head">
+      <span class="dc-title">Tài khoản học sinh</span>
+      <button class="dc-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dc-body">
+      <div class="dc-av" id="dc-av">?</div>
+      <div class="info-grid">
+        <div class="info-item full">
+          <div class="info-label">Họ và tên</div>
+          <div class="info-val" id="dc-name">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Lớp</div>
+          <div class="info-val" id="dc-class">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Giới tính</div>
+          <div class="info-val" id="dc-gender">—</div>
+        </div>
+        <div class="info-item full">
+          <div class="info-label">Ngày sinh</div>
+          <div class="info-val" id="dc-dob">—</div>
+        </div>
+        <div class="info-item full">
+          <div class="info-label">Số CCCD</div>
+          <div class="info-val" id="dc-cccd" style="font-family:'DM Mono',monospace;letter-spacing:.05em">—</div>
+        </div>
+        <div class="info-item full">
+          <div class="info-label">Mật khẩu</div>
+          <div class="pw-row">
+            <span class="pw-val" id="dc-pw">—</span>
+            <span class="pw-tag" id="dc-pw-tag">—</span>
+          </div>
+        </div>
+      </div>
+      <button class="reset-btn" id="dc-reset-btn" onclick="doResetPw()">🔑 Reset mật khẩu về mặc định (ngày sinh)</button>
+      <div class="reset-msg" id="dc-reset-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('hc_token');
+const role  = localStorage.getItem('hc_role');
+if (!token || role !== 'admin') location.href = '/admin';
+
+document.getElementById('admin-name').textContent = localStorage.getItem('hc_fullName') || 'Admin';
+
+const authH = () => ({ 'Content-Type':'application/json', 'Authorization':'Bearer '+token });
+
+let allStudents     = [];
+let ctxStudent      = null;   // học sinh đang được right-click
+let detailStudent   = null;   // học sinh đang xem modal
+let selectedStudent = null;
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(d){ const dt=new Date(d); return dt.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+dt.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}); }
+function renderMd(t){
+  t=t.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${esc(c.trim())}</code></pre>`);
+  t=t.replace(/`([^`\n]+)`/g,(_,c)=>`<code>${esc(c)}</code>`);
+  t=t.replace(/\*\*(.+?)\*\*/gs,'<strong>$1</strong>');
+  t=t.replace(/\*(.+?)\*/gs,'<em>$1</em>');
+  t=t.replace(/\n/g,'<br>');
+  return t;
+}
+
+// ── Stats ─────────────────────────────────────────────
+async function loadStats() {
+  const data = await fetch('/api/admin/stats',{headers:authH()}).then(r=>r.json());
+  document.getElementById('st-classes').textContent  = data.totalClasses;
+  document.getElementById('st-students').textContent = data.totalStudents;
+  document.getElementById('st-convs').textContent    = data.totalConvs;
+  document.getElementById('st-msgs').textContent     = data.totalMsgs;
+}
+
+// ── Classes ───────────────────────────────────────────
+async function loadClasses() {
+  const classes = await fetch('/api/admin/classes',{headers:authH()}).then(r=>r.json());
+  const el = document.getElementById('class-list');
+  if (!classes.length) { el.innerHTML='<div class="empty-hint">Chưa có lớp nào</div>'; return; }
+  el.innerHTML = '';
+  classes.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'class-item';
+    item.innerHTML = `<span>${esc(c)}</span><span class="class-count">—</span>`;
+    item.addEventListener('click', () => selectClass(c, item));
+    el.appendChild(item);
+  });
+}
+
+async function selectClass(cls, el) {
+  document.querySelectorAll('.class-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('s-search').value = '';
+  resetRightPanels();
+
+  const res = await fetch(`/api/admin/classes/${encodeURIComponent(cls)}/students`,{headers:authH()});
+  allStudents = await res.json();
+  renderStudents(allStudents);
+  el.querySelector('.class-count').textContent = allStudents.length;
+  document.getElementById('student-count').textContent = allStudents.length + ' hs';
+}
+
+function renderStudents(list) {
+  const el = document.getElementById('student-list');
+  if (!list.length) { el.innerHTML='<div class="empty-hint">Không có học sinh</div>'; return; }
+  el.innerHTML = '';
+  list.forEach((s,i) => {
+    const item = document.createElement('div');
+    item.className = 'student-item';
+    item.dataset.idx = i;
+    const pwClass = s.mustChangePassword ? 'default' : 'changed';
+    item.innerHTML = `
+      <div class="s-av">${esc(s.fullName.split(' ').pop().charAt(0).toUpperCase())}</div>
+      <div class="s-info">
+        <div class="s-name">${esc(s.fullName)}</div>
+        <div class="s-meta">${esc(s.cccd||'')} · ${s.convCount||0} hội thoại</div>
+      </div>
+      <div class="s-pw-status ${pwClass}" title="${s.mustChangePassword?'Chưa đổi mật khẩu':'Đã đổi mật khẩu'}"></div>`;
+    // Left click → chọn xem hội thoại
+    item.addEventListener('click', (e) => { hideCtx(); selectStudent(s, item); });
+    // Right click → context menu
+    item.addEventListener('contextmenu', (e) => { e.preventDefault(); showCtxMenu(e, s, item); });
+    el.appendChild(item);
+  });
+}
+
+function filterStudents(q) {
+  const filtered = allStudents.filter(s =>
+    s.fullName.toLowerCase().includes(q.toLowerCase()) ||
+    (s.cccd||'').includes(q)
+  );
+  renderStudents(filtered);
+}
+
+// ── Select student (left click) → load conversations ──
+async function selectStudent(student, el) {
+  selectedStudent = student;
+  document.querySelectorAll('.student-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('msgs-body').innerHTML = '<div class="placeholder"><span>💬</span>Chọn một hội thoại<br>để xem lịch sử chat</div>';
+  document.getElementById('msgs-head').innerHTML = '<span>Chọn hội thoại để xem nội dung</span>';
+
+  const convs = await fetch(`/api/admin/users/${student._id}/conversations`,{headers:authH()}).then(r=>r.json());
+  renderConvs(convs, student);
+}
+
+function renderConvs(convs, student) {
+  const el = document.getElementById('conv-list');
+  if (!convs.length) { el.innerHTML=`<div class="empty-hint">${esc(student.fullName)}<br>chưa có hội thoại</div>`; return; }
+  el.innerHTML = '';
+  convs.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'conv-row';
+    item.innerHTML = `<div class="conv-row-title">${esc(c.title)}</div><div class="conv-row-meta"><span>${c.msgCount} tin</span><span>${fmt(c.updatedAt)}</span></div>`;
+    item.addEventListener('click', () => selectConv(c, student, item));
+    el.appendChild(item);
+  });
+}
+
+async function selectConv(conv, student, el) {
+  document.querySelectorAll('.conv-row').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('msgs-head').innerHTML = `<b>${esc(student.fullName)}</b> <span style="color:var(--muted)">·</span> ${esc(conv.title)}`;
+  const msgs = await fetch(`/api/admin/conversations/${conv._id}/messages`,{headers:authH()}).then(r=>r.json());
+  const body = document.getElementById('msgs-body');
+  if (!msgs.length) { body.innerHTML='<div class="placeholder"><span>—</span>Hội thoại trống</div>'; return; }
+  body.innerHTML = '';
+  msgs.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'mb ' + m.role;
+    div.innerHTML = `<div class="mb-role">${m.role==='user'?'👤 '+esc(student.fullName):'🤖 Hermes'}</div>${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):renderMd(m.content)}`;
+    body.appendChild(div);
+  });
+  body.scrollTop = body.scrollHeight;
+}
+
+function resetRightPanels() {
+  document.getElementById('conv-list').innerHTML  = '<div class="empty-hint">← Chọn học sinh</div>';
+  document.getElementById('msgs-body').innerHTML  = '<div class="placeholder"><span>💬</span>Chọn một hội thoại<br>để xem lịch sử chat</div>';
+  document.getElementById('msgs-head').innerHTML  = '<span>Chọn hội thoại để xem nội dung</span>';
+}
+
+// ── Context menu ──────────────────────────────────────
+const ctxMenu = document.getElementById('ctx-menu');
+
+function showCtxMenu(e, student, itemEl) {
+  ctxStudent = student;
+  document.querySelectorAll('.student-item').forEach(i=>i.classList.remove('active'));
+  itemEl.classList.add('active');
+  const x = Math.min(e.clientX, window.innerWidth - 200);
+  const y = Math.min(e.clientY, window.innerHeight - 130);
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top  = y + 'px';
+  ctxMenu.classList.add('show');
+}
+
+function hideCtx() { ctxMenu.classList.remove('show'); }
+
+document.addEventListener('click', hideCtx);
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ hideCtx(); closeDetail(); } });
+
+function ctxViewDetail()  { hideCtx(); openDetail(ctxStudent); }
+function ctxViewConvs()   { hideCtx(); if(ctxStudent){ const el=document.querySelector(`.student-item.active`); selectStudent(ctxStudent, el||document.createElement('div')); } }
+async function ctxResetPw() {
+  hideCtx();
+  if (!ctxStudent) return;
+  if (!confirm(`Reset mật khẩu của ${ctxStudent.fullName} về mặc định (ngày sinh)?`)) return;
+  const res  = await fetch(`/api/admin/users/${ctxStudent._id}/reset-password`,{method:'POST',headers:authH()});
+  const data = await res.json();
+  if (res.ok) alert(`✅ Đã reset! Mật khẩu mới: ${data.defaultPw}`);
+  else        alert('❌ Lỗi: ' + data.error);
+}
+
+// ── Student detail modal ──────────────────────────────
+async function openDetail(student) {
+  const data = await fetch(`/api/admin/users/${student._id}`,{headers:authH()}).then(r=>r.json());
+  detailStudent = data;
+  document.getElementById('dc-av').textContent     = data.fullName.split(' ').pop().charAt(0).toUpperCase();
+  document.getElementById('dc-name').textContent   = data.fullName;
+  document.getElementById('dc-class').textContent  = data.className || '—';
+  document.getElementById('dc-gender').textContent = data.gender || '—';
+  document.getElementById('dc-dob').textContent    = data.dob || '—';
+  document.getElementById('dc-cccd').textContent   = data.cccd || '—';
+
+  const pwVal = document.getElementById('dc-pw');
+  const pwTag = document.getElementById('dc-pw-tag');
+  if (data.defaultPw) {
+    pwVal.textContent = data.defaultPw;
+    pwTag.textContent = 'Chưa đổi';
+    pwTag.className   = 'pw-tag default';
+  } else {
+    pwVal.textContent = '••••••••';
+    pwTag.textContent = 'Đã đổi';
+    pwTag.className   = 'pw-tag changed';
+  }
+
+  document.getElementById('dc-reset-msg').className = 'reset-msg';
+  document.getElementById('dc-reset-btn').disabled  = false;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail() { document.getElementById('detail-overlay').classList.remove('open'); }
+function closeDetailIfBg(e) { if(e.target===document.getElementById('detail-overlay')) closeDetail(); }
+
+async function doResetPw() {
+  if (!detailStudent) return;
+  if (!confirm(`Reset mật khẩu của ${detailStudent.fullName}?`)) return;
+  const btn = document.getElementById('dc-reset-btn');
+  const msg = document.getElementById('dc-reset-msg');
+  btn.disabled = true; btn.textContent = 'Đang reset…';
+  const res  = await fetch(`/api/admin/users/${detailStudent._id}/reset-password`,{method:'POST',headers:authH()});
+  const data = await res.json();
+  if (res.ok) {
+    msg.textContent = `✅ Đã reset! Mật khẩu mới: ${data.defaultPw}`;
+    msg.className = 'reset-msg ok';
+    document.getElementById('dc-pw').textContent = data.defaultPw;
+    document.getElementById('dc-pw-tag').textContent = 'Chưa đổi';
+    document.getElementById('dc-pw-tag').className   = 'pw-tag default';
+    // Refresh student list dot
+    await loadClasses();
+  } else {
+    msg.textContent = '❌ ' + data.error;
+    msg.className = 'reset-msg err';
+  }
+  btn.disabled = false;
+  btn.textContent = '🔑 Reset mật khẩu về mặc định (ngày sinh)';
+}
+
+function logout() {
+  ['hc_token','hc_role','hc_fullName','hc_className','hc_gender','hc_dob','hc_mustChangePw'].forEach(k=>localStorage.removeItem(k));
+  location.href = '/admin';
+}
+
+Promise.all([loadStats(), loadClasses()]);
+</script>
+</body>
+</html>
