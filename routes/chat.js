@@ -145,18 +145,19 @@ router.post('/ai', async (req, res) => {
     }
 
     // Payload gửi lên SiliconFlow theo docs
-    const payload = {
-      model:             AI_MODEL,
-      messages,
-      stream,
-      max_tokens,
-      temperature,
-      top_p:             0.9,       // nucleus sampling — đa dạng hơn mặc định 0.7
-      top_k:             40,        // giới hạn vocab pool
-      frequency_penalty: 0.3,       // giảm lặp từ
-      thinking_budget:   1024,      // token tối đa cho chain-of-thought (Thinking model)
-      n:                 1,
-    };
+const payload = {
+  model: AI_MODEL,
+  messages,
+  stream: true, // Luôn ưu tiên stream để học sinh thấy chữ chạy ngay, đỡ sốt ruột
+  max_tokens: 4096, // Đủ cho các bài văn dài hoặc giải code Python/Node.js
+  temperature: 0.6, // Giảm xuống một chút để tăng độ chuẩn xác
+  top_p: 0.85,      // Hơi khắt khe hơn 0.9 để tập trung vào các từ vựng chất lượng
+  top_k: 50,        // Tăng nhẹ để model có vốn từ phong phú cho môn Văn
+  frequency_penalty: 0.2, 
+  presence_penalty: 0.2,
+  thinking_budget: 2048, // Tăng lên để giải quyết các bài toán "xoắn não"
+  n: 1,
+};
 
     const sfRes = await fetch(SILICONFLOW_URL, {
       method: 'POST',
