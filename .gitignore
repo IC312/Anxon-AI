@@ -1,0 +1,13 @@
+# Environment variables - KHÔNG commit lên GitHub
+.env
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
