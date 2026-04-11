@@ -522,7 +522,7 @@ async function autoNameConversation(userMsg,aiReply){
   try{
     const res=await fetch(API_PROXY,{method:'POST',headers:authH(),body:JSON.stringify({
       messages:[
-        {role:'system',content:'Bạn đặt tên hội thoại. Chỉ trả về tên DƯỚI 10 CHỮ, cực ngắn gọn, không giải thích, không dấu câu cuối, không ngoặc kép.'},
+        {role:'system',content:'Bạn đặt tên hội thoại. Cực ngắn gọn, không giải thích, không dấu câu cuối, không ngoặc kép.'},
         {role:'user',content:`Đặt tên dưới 10 chữ cho hội thoại:\nUser: ${userMsg.slice(0,200)}\nAI: ${aiReply.slice(0,200)}`}
       ],stream:true,max_tokens:20,temperature:.2
     })});
